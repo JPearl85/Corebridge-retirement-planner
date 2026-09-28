@@ -1515,6 +1515,10 @@ select option {
 .bs-title { font-size: 20px; font-weight: 600; color: #FF8A3D; letter-spacing: 0.01em; }
 .bs-restart { padding: 7px 16px; border-radius: 10px; border: 1px solid #FF7A5C; background: #E23B2E; color: #FFF3EE; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
 .bs-restart:hover { background: #FF5A45; border-color: #FFA48C; }
+.bs-actions { display: flex; align-items: center; gap: 0.5rem; }
+.bs-mute { padding: 7px 14px; border-radius: 10px; border: 1px solid #3D8BE0; background: #16263D; color: #8FBBEC; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.bs-mute:hover { background: #21406A; color: #CFE4FA; }
+.bs-mute.muted { border-color: #4A5A70; color: #7E8A9B; }
 .bs-status { display: flex; flex-direction: column; gap: 0.4rem; border-left: 3px solid #3D8BE0; padding-left: 0.9rem; }
 .bs-message { font-size: 14px; font-weight: 500; color: var(--text); }
 .bs-counts { display: flex; flex-wrap: wrap; gap: 1.25rem; font-size: 12px; color: #8FBBEC; }

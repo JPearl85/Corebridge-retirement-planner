@@ -4,8 +4,11 @@ import type { Board, GamePhase, ShotResult } from './types';
 import { allShipsSunk, fire, placeShips } from './game';
 import { applyResult, createAiState, nextShot } from './ai';
 import type { AiState } from './ai';
+import { outcomeSound, playSound } from './sound';
+import type { SoundName } from './sound';
 
 const AI_DELAY_MS = 700;
+const IMPACT_DELAY_MS = 190;
 const COLUMN_LABELS = 'ABCDEFGHIJ'.split('');
 
 interface GameState {
@@ -91,33 +94,55 @@ const Grid: React.FC<GridProps> = ({ board, revealShips, onFire, disabled, label
 
 const BattleshipGame: React.FC = () => {
   const [game, setGame] = useState<GameState>(newGame);
+  const [muted, setMuted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const soundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameRef = useRef(game);
+  const mutedRef = useRef(muted);
+
+  useEffect(() => { gameRef.current = game; }, [game]);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (soundTimerRef.current) clearTimeout(soundTimerRef.current);
   }, []);
 
-  const runAiTurn = useCallback(() => {
-    setGame(prev => {
-      if (prev.phase !== 'playing' || prev.turn !== 'ai') return prev;
-      const shot = nextShot(prev.ai);
-      const { board, result } = fire(prev.playerBoard, shot.row, shot.col);
-      const ai = applyResult(prev.ai, shot, result.outcome);
-      const playerSunk = result.outcome === 'sunk' && result.ship
-        ? [...prev.playerSunk, result.ship.name]
-        : prev.playerSunk;
-      const lost = allShipsSunk(board);
-      return {
-        ...prev,
-        playerBoard: board,
-        ai,
-        playerSunk,
-        phase: lost ? 'gameOver' : 'playing',
-        turn: 'player',
-        message: lost ? 'The enemy sank your entire fleet. You lose.' : describe(result, 'Enemy'),
-      };
-    });
+  const play = useCallback((name: SoundName | null) => {
+    if (!name || mutedRef.current) return;
+    playSound(name);
   }, []);
+
+  const playShot = useCallback((result: ShotResult, finale: SoundName | null) => {
+    play('fire');
+    if (soundTimerRef.current) clearTimeout(soundTimerRef.current);
+    soundTimerRef.current = setTimeout(() => {
+      play(outcomeSound(result.outcome));
+      if (finale) setTimeout(() => play(finale), 450);
+    }, IMPACT_DELAY_MS);
+  }, [play]);
+
+  const runAiTurn = useCallback(() => {
+    const prev = gameRef.current;
+    if (prev.phase !== 'playing' || prev.turn !== 'ai') return;
+    const shot = nextShot(prev.ai);
+    const { board, result } = fire(prev.playerBoard, shot.row, shot.col);
+    const ai = applyResult(prev.ai, shot, result.outcome);
+    const playerSunk = result.outcome === 'sunk' && result.ship
+      ? [...prev.playerSunk, result.ship.name]
+      : prev.playerSunk;
+    const lost = allShipsSunk(board);
+    playShot(result, lost ? 'lose' : null);
+    setGame({
+      ...prev,
+      playerBoard: board,
+      ai,
+      playerSunk,
+      phase: lost ? 'gameOver' : 'playing',
+      turn: 'player',
+      message: lost ? 'The enemy sank your entire fleet. You lose.' : describe(result, 'Enemy'),
+    });
+  }, [playShot]);
 
   useEffect(() => {
     if (game.phase !== 'playing' || game.turn !== 'ai') return;
@@ -128,27 +153,28 @@ const BattleshipGame: React.FC = () => {
   }, [game.phase, game.turn, runAiTurn]);
 
   const handlePlayerFire = (row: number, col: number) => {
-    setGame(prev => {
-      if (prev.phase !== 'playing' || prev.turn !== 'player') return prev;
-      const { board, result } = fire(prev.enemyBoard, row, col);
-      if (result.outcome === 'repeat') return prev;
-      const enemySunk = result.outcome === 'sunk' && result.ship
-        ? [...prev.enemySunk, result.ship.name]
-        : prev.enemySunk;
-      const won = allShipsSunk(board);
-      return {
-        ...prev,
-        enemyBoard: board,
-        enemySunk,
-        phase: won ? 'gameOver' : 'playing',
-        turn: won ? 'player' : 'ai',
-        message: won ? 'You sank the entire enemy fleet. You win!' : describe(result, 'You'),
-      };
+    const prev = gameRef.current;
+    if (prev.phase !== 'playing' || prev.turn !== 'player') return;
+    const { board, result } = fire(prev.enemyBoard, row, col);
+    if (result.outcome === 'repeat') return;
+    const enemySunk = result.outcome === 'sunk' && result.ship
+      ? [...prev.enemySunk, result.ship.name]
+      : prev.enemySunk;
+    const won = allShipsSunk(board);
+    playShot(result, won ? 'win' : null);
+    setGame({
+      ...prev,
+      enemyBoard: board,
+      enemySunk,
+      phase: won ? 'gameOver' : 'playing',
+      turn: won ? 'player' : 'ai',
+      message: won ? 'You sank the entire enemy fleet. You win!' : describe(result, 'You'),
     });
   };
 
   const restart = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (soundTimerRef.current) clearTimeout(soundTimerRef.current);
     setGame(newGame());
   };
 
@@ -161,7 +187,17 @@ const BattleshipGame: React.FC = () => {
           <div className="section-label">Coffee break</div>
           <div className="bs-title">Battleship</div>
         </div>
-        <button type="button" className="bs-restart" onClick={restart}>Restart</button>
+        <div className="bs-actions">
+          <button
+            type="button"
+            className={`bs-mute ${muted ? 'muted' : ''}`}
+            onClick={() => setMuted(m => !m)}
+            aria-pressed={muted}
+          >
+            {muted ? 'Sound off' : 'Sound on'}
+          </button>
+          <button type="button" className="bs-restart" onClick={restart}>Restart</button>
+        </div>
       </div>
 
       <div className="chart-card bs-status">
