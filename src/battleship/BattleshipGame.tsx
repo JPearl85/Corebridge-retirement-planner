@@ -6,6 +6,8 @@ import { applyResult, createAiState, nextShot } from './ai';
 import type { AiState } from './ai';
 import { outcomeSound, playSound } from './sound';
 import type { SoundName } from './sound';
+import { CLAUDE, DEVIN } from './teams';
+import TeamBadge from './TeamBadge';
 
 const AI_DELAY_MS = 700;
 const IMPACT_DELAY_MS = 190;
@@ -29,7 +31,7 @@ function newGame(): GameState {
     ai: createAiState(),
     phase: 'playing',
     turn: 'player',
-    message: 'Your turn — pick a target on the enemy waters.',
+    message: `${DEVIN.name} to fire — pick a target in ${CLAUDE.name} waters.`,
     playerSunk: [],
     enemySunk: [],
   };
@@ -37,10 +39,10 @@ function newGame(): GameState {
 
 const coordLabel = (row: number, col: number) => `${COLUMN_LABELS[col]}${row + 1}`;
 
-function describe(result: ShotResult, who: 'You' | 'Enemy'): string {
+function describe(result: ShotResult, who: string, target: string): string {
   const where = coordLabel(result.row, result.col);
-  if (result.outcome === 'sunk') return `${who} sank the ${result.ship?.name} at ${where}.`;
-  if (result.outcome === 'hit') return `${who} hit a ship at ${where}.`;
+  if (result.outcome === 'sunk') return `${who} sank the ${target} ${result.ship?.name} at ${where}.`;
+  if (result.outcome === 'hit') return `${who} hit a ${target} ship at ${where}.`;
   return `${who} missed at ${where}.`;
 }
 
@@ -50,11 +52,11 @@ interface GridProps {
   onFire?: (row: number, col: number) => void;
   disabled?: boolean;
   label: string;
+  team: 'devin' | 'claude';
 }
 
-const Grid: React.FC<GridProps> = ({ board, revealShips, onFire, disabled, label }) => (
-  <div className="bs-board">
-    <div className="bs-board-title">{label}</div>
+const Grid: React.FC<GridProps> = ({ board, revealShips, onFire, disabled, label, team }) => (
+  <div className={`bs-board bs-fleet-${team}`}>
     <div className="bs-grid" role="grid" aria-label={label}>
       <div className="bs-corner" />
       {COLUMN_LABELS.map(col => (
@@ -140,7 +142,9 @@ const BattleshipGame: React.FC = () => {
       playerSunk,
       phase: lost ? 'gameOver' : 'playing',
       turn: 'player',
-      message: lost ? 'The enemy sank your entire fleet. You lose.' : describe(result, 'Enemy'),
+      message: lost
+        ? `${CLAUDE.name} sank the whole ${DEVIN.name} fleet. ${CLAUDE.name} wins.`
+        : describe(result, CLAUDE.name, DEVIN.name),
     });
   }, [playShot]);
 
@@ -168,7 +172,9 @@ const BattleshipGame: React.FC = () => {
       enemySunk,
       phase: won ? 'gameOver' : 'playing',
       turn: won ? 'player' : 'ai',
-      message: won ? 'You sank the entire enemy fleet. You win!' : describe(result, 'You'),
+      message: won
+        ? `${DEVIN.name} sank the whole ${CLAUDE.name} fleet. ${DEVIN.name} wins!`
+        : describe(result, DEVIN.name, CLAUDE.name),
     });
   };
 
@@ -186,6 +192,11 @@ const BattleshipGame: React.FC = () => {
         <div>
           <div className="section-label">Coffee break</div>
           <div className="bs-title">Battleship</div>
+          <div className="bs-matchup">
+            <TeamBadge team={DEVIN} />
+            <span className="bs-versus">vs</span>
+            <TeamBadge team={CLAUDE} />
+          </div>
         </div>
         <div className="bs-actions">
           <button
@@ -203,24 +214,27 @@ const BattleshipGame: React.FC = () => {
       <div className="chart-card bs-status">
         <div className="bs-message">{game.message}</div>
         <div className="bs-counts">
-          <span>Your ships afloat: <strong>{remaining(game.playerBoard)}</strong> / {game.playerBoard.ships.length}</span>
-          <span>Enemy ships afloat: <strong>{remaining(game.enemyBoard)}</strong> / {game.enemyBoard.ships.length}</span>
+          <span className="bs-count-devin">{DEVIN.name} afloat: <strong>{remaining(game.playerBoard)}</strong> / {game.playerBoard.ships.length}</span>
+          <span className="bs-count-claude">{CLAUDE.name} afloat: <strong>{remaining(game.enemyBoard)}</strong> / {game.enemyBoard.ships.length}</span>
         </div>
         {game.phase === 'gameOver' && <div className="bs-gameover">Game over — {game.message}</div>}
       </div>
 
       <div className="bs-boards">
-        <div className="chart-card">
-          <Grid board={game.playerBoard} revealShips label="Your fleet" />
+        <div className="chart-card bs-card-devin">
+          <div className="bs-board-header"><TeamBadge team={DEVIN} /><span className="bs-board-sub">your fleet</span></div>
+          <Grid board={game.playerBoard} revealShips label={`${DEVIN.name} waters`} team="devin" />
           <div className="bs-sunk">Lost: {game.playerSunk.length > 0 ? game.playerSunk.join(', ') : 'none'}</div>
         </div>
-        <div className="chart-card">
+        <div className="chart-card bs-card-claude">
+          <div className="bs-board-header"><TeamBadge team={CLAUDE} /><span className="bs-board-sub">enemy fleet</span></div>
           <Grid
             board={game.enemyBoard}
             revealShips={game.phase === 'gameOver'}
             onFire={handlePlayerFire}
             disabled={game.phase !== 'playing' || game.turn !== 'player'}
-            label="Enemy waters"
+            label={`${CLAUDE.name} waters`}
+            team="claude"
           />
           <div className="bs-sunk">Sunk: {game.enemySunk.length > 0 ? game.enemySunk.join(', ') : 'none'}</div>
         </div>

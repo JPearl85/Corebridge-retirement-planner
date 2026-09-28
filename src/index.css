@@ -1526,14 +1526,28 @@ select option {
 .bs-gameover { font-size: 13px; font-weight: 700; color: #FF6B4A; }
 .bs-boards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0.75rem; }
 .bs-boards > .chart-card { background: #0F1C2E; border-color: #27466F; }
-.bs-board-title { font-size: 13px; font-weight: 600; color: #8FBBEC; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+.bs-matchup { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.45rem; }
+.bs-versus { font-size: 11px; font-weight: 700; color: #7E8A9B; text-transform: uppercase; letter-spacing: 0.1em; }
+.bs-team { display: inline-flex; align-items: center; gap: 0.4rem; padding: 4px 10px 4px 6px; border-radius: 999px; border: 1px solid transparent; font-size: 12px; }
+.bs-team svg { display: block; }
+.bs-team-name { font-weight: 700; }
+.bs-team-role { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+.bs-team-devin { background: rgba(47,125,246,0.14); border-color: #2F7DF6; color: #9CC4FF; }
+.bs-team-claude { background: rgba(217,119,87,0.14); border-color: #D97757; color: #F0B39B; }
+.bs-board-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+.bs-board-sub { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #7E8A9B; }
+.bs-card-devin { border-color: rgba(47,125,246,0.45) !important; }
+.bs-card-claude { border-color: rgba(217,119,87,0.45) !important; }
+.bs-count-devin strong { color: #6FA8F5; }
+.bs-count-claude strong { color: #E39273; }
 .bs-grid { display: grid; grid-template-columns: 20px repeat(10, 1fr); gap: 3px; max-width: 400px; }
 .bs-corner { width: 20px; }
 .bs-axis { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #6FA8E6; }
 .bs-cell { aspect-ratio: 1; border: 1px solid #27466F; border-radius: 4px; background: #16263D; font-size: 12px; line-height: 1; font-family: inherit; color: var(--text); padding: 0; cursor: pointer; }
 .bs-cell:disabled { cursor: default; }
 .bs-cell:not(:disabled):hover { background: #21406A; border-color: #4DA3FF; }
-.bs-cell.ship { background: #F2913E; border-color: #FFB36B; }
+.bs-fleet-devin .bs-cell.ship { background: #2F7DF6; border-color: #7FB2FF; }
+.bs-fleet-claude .bs-cell.ship { background: #D97757; border-color: #F0A184; }
 .bs-cell.miss { background: #0C1726; color: #6FA8E6; }
 .bs-cell.hit { background: #E23B2E; border-color: #FF7A5C; color: #FFF3EE; font-weight: 700; }
 .bs-sunk { margin-top: 0.6rem; font-size: 12px; color: #8FBBEC; }
