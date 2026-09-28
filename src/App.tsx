@@ -309,6 +309,7 @@ type NavItem = { key: PlannerPage; label: string; section: 'SETUP' | 'RESULTS' |
 const App: React.FC = () => {
   const [plans, setPlans] = useState<StoredPlan[]>(() => loadPlans().plans);
   const [activePlanId, setActivePlanId] = useState<string>(() => loadPlans().activePlanId);
+  const [comparePlanId, setComparePlanId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<PlannerPage>('about');
   const [rows, setRows] = useState<ProjectionRow[]>([]);
   const [planMenuOpen, setPlanMenuOpen] = useState(false);
@@ -353,6 +354,7 @@ const App: React.FC = () => {
     { key: 'rmd', label: 'RMDs & Conversions', section: 'RESULTS', configured: inputs.qcdAnnual > 0 || !!conversionSchedule },
     { key: 'tax', label: 'Tax Analysis', section: 'RESULTS' },
     { key: 'cashflow', label: 'Cash Flow', section: 'RESULTS' },
+    { key: 'compare', label: 'Compare Plans', section: 'RESULTS' },
     { key: 'optimizer', label: 'Roth Optimizer', section: 'TOOLS' },
     { key: 'mc', label: 'Monte Carlo', section: 'TOOLS' },
   ];
@@ -409,6 +411,19 @@ const App: React.FC = () => {
     monteCarloSettings.cashAllocation,
     monteCarloSettings.blockSize,
   ]);
+
+  const comparePlan = comparePlanId === null || comparePlanId === activePlanId
+    ? undefined
+    : plans.find(p => p.id === comparePlanId) ?? SAMPLE_PLANS.find(p => p.id === comparePlanId);
+
+  const compareRows: ProjectionRow[] | null = useMemo(() => {
+    if (!comparePlan) return null;
+    return runProjection(comparePlan.inputs, comparePlan.inputs.r, comparePlan.conversionSchedule ?? undefined);
+  }, [comparePlan]);
+
+  const compareOptions = plans
+    .filter(p => p.id !== activePlanId)
+    .map(p => ({ id: p.id, name: p.name }));
 
   const optimization: OptimizationOutput | null = useMemo(() => {
     try {
@@ -785,6 +800,12 @@ const App: React.FC = () => {
         setMcCashAllocation={cashAllocation => updateMonteCarloSettings({ cashAllocation })}
         mcBlockSize={monteCarloSettings.blockSize}
         setMcBlockSize={blockSize => updateMonteCarloSettings({ blockSize })}
+        activePlanName={activePlan.name}
+        comparePlanId={comparePlan ? comparePlan.id : null}
+        comparePlanName={comparePlan ? comparePlan.name : null}
+        compareRows={compareRows}
+        compareOptions={compareOptions}
+        onComparePlanChange={setComparePlanId}
         getMonteCarloOptions={getMonteCarloOptions}
         dollarMode={dollarMode}
       />
