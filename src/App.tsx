@@ -7,6 +7,7 @@ import type { OptimizationOutput } from './optimizer';
 import { exportToSpreadsheet } from './exportSpreadsheet';
 import { APP_VERSION, CHANGELOG } from './changelog';
 import Main from './components/Main';
+import BattleshipGame from './battleship/BattleshipGame';
 
 const PLANS_KEY = 'retirement-planner-plans-v2';
 const LEGACY_KEY = 'retirement-planner-inputs';
@@ -305,11 +306,13 @@ function importPlanFromFile(file: File): Promise<{ inputs: InputParams; conversi
 }
 
 type NavItem = { key: PlannerPage; label: string; section: 'SETUP' | 'RESULTS' | 'TOOLS'; configured?: boolean };
+type MainView = 'planner' | 'battleship';
 
 const App: React.FC = () => {
   const [plans, setPlans] = useState<StoredPlan[]>(() => loadPlans().plans);
   const [activePlanId, setActivePlanId] = useState<string>(() => loadPlans().activePlanId);
   const [activeTab, setActiveTab] = useState<PlannerPage>('about');
+  const [view, setView] = useState<MainView>('planner');
   const [rows, setRows] = useState<ProjectionRow[]>([]);
   const [planMenuOpen, setPlanMenuOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -705,8 +708,8 @@ const App: React.FC = () => {
             {navItems.filter(item => item.section === section).map(item => (
               <button
                 key={item.key}
-                className={`nav-item ${activeTab === item.key ? 'active' : ''}`}
-                onClick={() => setActiveTab(item.key)}
+                className={`nav-item ${view === 'planner' && activeTab === item.key ? 'active' : ''}`}
+                onClick={() => { setActiveTab(item.key); setView('planner'); }}
               >
                 <span className={`nav-dot ${item.configured === false ? 'missing' : ''}`} />
                 <span>{item.label}</span>
@@ -714,6 +717,16 @@ const App: React.FC = () => {
             ))}
           </div>
         ))}
+        <div className="nav-section">
+          <div className="nav-section-label">BREAK ROOM</div>
+          <button
+            className={`nav-item ${view === 'battleship' ? 'active' : ''}`}
+            onClick={() => setView('battleship')}
+          >
+            <span className="nav-dot" />
+            <span>Battleship</span>
+          </button>
+        </div>
         <div className="nav-footer">
           <button className="changelog-trigger" type="button" onClick={() => setChangelogOpen(true)}>
             <span>What&apos;s new</span>
@@ -751,6 +764,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+      {view === 'battleship' ? <BattleshipGame /> : (
       <Main
         inputs={inputs}
         activeTab={activeTab}
@@ -788,6 +802,7 @@ const App: React.FC = () => {
         getMonteCarloOptions={getMonteCarloOptions}
         dollarMode={dollarMode}
       />
+      )}
     </div>
   );
 };
