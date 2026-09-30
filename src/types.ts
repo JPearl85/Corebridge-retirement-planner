@@ -216,6 +216,7 @@ export type PlannerPage =
   | 'rmd'
   | 'tax'
   | 'cashflow'
+  | 'compare'
   | 'optimizer'
   | 'mc';
 

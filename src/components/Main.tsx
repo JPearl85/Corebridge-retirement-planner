@@ -5,6 +5,7 @@ import { BASE_TAX_YEAR, activeSalaryAt, defaultSpouseRetireAge, effectiveSpouseA
 import { ExpenseTab } from './ExpenseTab';
 import { AccountsTab } from './AccountsTab';
 import Sidebar from './Sidebar';
+import CompareView from './CompareView';
 import TipLabel from './TipLabel';
 import TouchSlider from './TouchSlider';
 import { CUSTOM_STATE_TAX_PRESET, getStateTaxPreset, STATE_TAX_PRESETS } from '../stateTaxPresets';
@@ -62,6 +63,12 @@ interface MainProps {
   setMcCashAllocation: (allocation: number) => void;
   mcBlockSize: number;
   setMcBlockSize: (blockSize: number) => void;
+  activePlanName: string;
+  comparePlanId: string | null;
+  comparePlanName: string | null;
+  compareRows: ProjectionRow[] | null;
+  compareOptions: Array<{ id: string; name: string }>;
+  onComparePlanChange: (planId: string | null) => void;
   getMonteCarloOptions: (
     preset: MonteCarloPreset,
     runs: number,
@@ -168,6 +175,12 @@ const Main: React.FC<MainProps> = ({
   setMcCashAllocation,
   mcBlockSize,
   setMcBlockSize,
+  activePlanName,
+  comparePlanId,
+  comparePlanName,
+  compareRows,
+  compareOptions,
+  onComparePlanChange,
   getMonteCarloOptions,
   dollarMode,
 }) => {
@@ -189,6 +202,7 @@ const Main: React.FC<MainProps> = ({
     rmd: 'RMDs & Conversions',
     tax: 'Tax Analysis',
     cashflow: 'Cash Flow',
+    compare: 'Compare Plans',
     optimizer: 'Roth Optimizer',
     mc: 'Monte Carlo',
   };
@@ -1327,6 +1341,18 @@ const Main: React.FC<MainProps> = ({
             Net cash flow near zero is expected — the model draws exactly what is needed each year.
           </div>
         </div>
+      )}
+
+      {activeTab === 'compare' && (
+        <CompareView
+          activePlanName={activePlanName}
+          rows={rows}
+          comparePlanId={comparePlanId}
+          comparePlanName={comparePlanName}
+          compareRows={compareRows}
+          compareOptions={compareOptions}
+          onComparePlanChange={onComparePlanChange}
+        />
       )}
 
       {activeTab === 'expenses' && (
